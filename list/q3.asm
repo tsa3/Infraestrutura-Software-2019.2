@@ -2,7 +2,7 @@ org 0x7c00
 jmp 0x0000:start
 
 data:
-    qtd times 11 db 0
+    qtd times 10 db 0
     string times 10 db 0
     sim db 'S', 0
     nao db 'N', 0
@@ -64,13 +64,14 @@ endl:
     call putchar
     ret
 
-resolve:                                   ; mov di, string
+resolve:                                   ; adaptação da antiga gets, necessita de mov di, string
     xor cx, cx                          ; zerar contador
     .check:                             ; testar o contador, pra não ler mais do que a quantidade dada pela entrada
         cmp bl, 0
         dec bl
         jne .loop1
         je .done
+        
 
     .loop1:
         call getchar
@@ -115,6 +116,7 @@ resolve:                                   ; mov di, string
         je .loop1
         dec di
         dec cl
+        pop bx
         mov byte[di], 0
         call delchar
         jmp .loop1
@@ -125,7 +127,7 @@ resolve:                                   ; mov di, string
     call endl
     ret
     
-  intela:                               ; Função que incia o modo video e printa uma tela preta pra carregar as cores
+intela:                               ; Função que incia o modo video e printa uma tela preta pra carregar as cores
     mov ah, 0
     mov al, 12h
     int 10h
@@ -150,7 +152,16 @@ print_S:
 print_N:
     mov si, nao
     call intela
-    call prints
+    .loop:
+        lodsb
+        cmp al, 0
+        je endP
+        mov ah, 0xe
+        mov bh, 0
+        mov bl, 0xe
+        int 10h
+        jmp .loop
+        ret
     ret
 
 prints:             ; mov si, string
@@ -168,11 +179,10 @@ start:                                  ; main
     mov ds, ax
     mov es, ax
 ;#################                      ; recebendo o valor de entradas
-    push 10
+    ;call intela
     mov di, qtd
-    call intela
-    mov di, string
     call gets
+    mov di, string
     mov bl, al
     mov di, string
     call resolve
