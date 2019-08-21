@@ -4,6 +4,8 @@ jmp 0x0000:start
 data:
     qtd times 11 db 0
     string times 10 db 0
+    sim db 'S', 0
+    nao db 'N', 0
 
 ; funções
 putchar:
@@ -16,6 +18,36 @@ getchar:
     int 16h
     ret
   
+gets:                 ; mov di, string
+  xor cx, cx          ; zerar contador
+  .loop1:
+    call getchar
+    cmp al, 0x08      ; backspace
+    je .backspace
+    cmp al, 0x0d      ; carriage return
+    je .done
+    cmp cl, 10        ; string limit checker
+    je .loop1
+    
+    stosb
+    inc cl
+    call putchar
+    
+    jmp .loop1
+    .backspace:
+      cmp cl, 0       ; is empty?
+      je .loop1
+      dec di
+      dec cl
+      mov byte[di], 0
+      call delchar
+    jmp .loop1
+  .done:
+  mov al, 0
+  stosb
+  call endl
+  ret
+
 delchar:
     mov al, 0x08                        ; backspace
     call putchar
@@ -32,7 +64,7 @@ endl:
     call putchar
     ret
 
-gets:                                   ; mov di, string
+resolve:                                   ; mov di, string
     xor cx, cx                          ; zerar contador
     .check:                             ; testar o contador, pra não ler mais do que a quantidade dada pela entrada
         cmp bl, 0
@@ -69,10 +101,11 @@ gets:                                   ; mov di, string
         .check_parentesis:              ; função pra checar parêntesis
         sub dl,1                        ; soma de volta 1
         cmp al,dl                       
-        jne .back_to_stack               ; se não forem iguais, mandamos ambos de volta pra pilha
+        jne .back_to_stack              ; se não forem iguais, mandamos ambos de volta pra pilha
         je .check                       ; se sim, voltamos a rotina
 
         .back_to_stack:
+        sub dl, 1                       ; dl volta ao valor inicial
         push dx
         push ax
         jmp .check
@@ -109,12 +142,14 @@ endP:                                   ; Função que termina o programa
     jmp $
 
 print_S:
-    mov si, 'S'
+    mov si, sim
+    call intela
     call prints
     ret
 
 print_N:
-    mov si, 'N'
+    mov si, nao
+    call intela
     call prints
     ret
 
@@ -135,10 +170,12 @@ start:                                  ; main
 ;#################                      ; recebendo o valor de entradas
     push 10
     mov di, qtd
-    call getchar
-    mov bl, al
+    call intela
     mov di, string
     call gets
+    mov bl, al
+    mov di, string
+    call resolve
     pop dx
     cmp dl, 10
     je print_S
