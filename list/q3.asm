@@ -6,7 +6,7 @@ data:
     string times 10 db 0
     sim db 'S', 0
     nao db 'N', 0
-
+    contador times 16 db
 ; funções
 putchar:
     mov ah, 0x0e
@@ -18,7 +18,7 @@ getchar:
     int 16h
     ret
   
-gets:                 ; mov di, string
+gets:                                       ; mov di, string
   xor cx, cx          ; zerar contador
   .loop1:
     call getchar
@@ -64,22 +64,39 @@ endl:
     call putchar
     ret
 
-resolve:                                   ; adaptação da antiga gets, necessita de mov di, string
-    xor cx, cx                          ; zerar contador
-    .check:                             ; testar o contador, pra não ler mais do que a quantidade dada pela entrada
+stoi:                                       ; mov si, string (String to integer)
+  xor cx, cx
+  xor ax, ax
+  .loop1:
+    push ax
+    lodsb
+    mov cl, al
+    pop ax
+    cmp cl, 0                               ; check EOF(NULL)
+    je .endloop1
+    sub cl, 48                              ; '9'-'0' = 9
+    mov bx, 10
+    mul bx                                  ; 999*10 = 9990
+    add ax, cx                              ; 9990+9 = 9999
+    jmp .loop1
+  .endloop1:
+  ret
+
+resolve:                                    ; adaptação da antiga gets, necessita de mov di, string
+    xor cx, cx                              ; zerar contador
+    .check:                                 ; testar o contador, pra não ler mais do que a quantidade dada pela entrada
         cmp bl, 0
         dec bl
         jne .loop1
         je .done
         
-
     .loop1:
         call getchar
-        cmp al, 0x08                    ; backspace
+        cmp al, 0x08                        ; backspace
         je .backspace
-        cmp al, 0x0d                    ; carriage return
-        je .done
-        cmp cl, 10                      ; string limit checker
+        cmp al, 0x0d                        ; carriage return
+        je .check
+        cmp cl, 10                          ; string limit checker
         je .loop1
 
         stosb
@@ -89,30 +106,30 @@ resolve:                                   ; adaptação da antiga gets, necessi
         mov bl, 0xe
         call putchar
 
-        pop dx                          ; remove a ponta da pilha
-        cmp dl, 10                      ; checa se é o primeiro elemento da pilha
-        je .back_to_stack                ; se for, devolve pra pilha
+        pop dx                              ; remove a ponta da pilha
+        cmp dl, 10                          ; checa se é o primeiro elemento da pilha
+        je .back_to_stack                   ; se for, devolve pra pilha
         
-        add dl,2                        ; soma dois pra igualar [ com ] por exemplo já que [ = 133 e ] = 135 (ASCII)
-        cmp al,dl                       ; compara eles dois para ver se são iguais, se forem, só deixa fora da pilha
-        jne .check_parentesis           ; a diferença entre parentesis é um, já que ( = 50 e ) = 51 (ASCII)
+        add dl,2                            ; soma dois pra igualar [ com ] por exemplo já que [ = 133 e ] = 135 (ASCII)
+        cmp al,dl                           ; compara eles dois para ver se são iguais, se forem, só deixa fora da pilha
+        jne .check_parentesis               ; a diferença entre parentesis é um, já que ( = 50 e ) = 51 (ASCII)
 
         jmp .check
 
-        .check_parentesis:              ; função pra checar parêntesis
-        sub dl,1                        ; soma de volta 1
+        .check_parentesis:                  ; função pra checar parêntesis
+        sub dl,1                            ; soma de volta 1
         cmp al,dl                       
-        jne .back_to_stack              ; se não forem iguais, mandamos ambos de volta pra pilha
-        je .check                       ; se sim, voltamos a rotina
+        jne .back_to_stack                  ; se não forem iguais, mandamos ambos de volta pra pilha
+        je .check                           ; se sim, voltamos a rotina
 
         .back_to_stack:
-        sub dl, 1                       ; dl volta ao valor inicial
-        push dx
-        push ax
-        jmp .check
+        sub dl, 1                           ; dl volta ao valor inicial
+        push dx                             ; devolve dx a pilha
+        push ax                             ; inclui o ax na pilha
+        jmp .check                          ; volta pra check
 
         .backspace:
-        cmp cl, 0                       ; is empty?
+        cmp cl, 0                           ; is empty?
         je .loop1
         dec di
         dec cl
@@ -127,7 +144,7 @@ resolve:                                   ; adaptação da antiga gets, necessi
     call endl
     ret
     
-intela:                               ; Função que incia o modo video e printa uma tela preta pra carregar as cores
+intela:                                     ; Função que incia o modo video e printa uma tela preta pra carregar as cores
     mov ah, 0
     mov al, 12h
     int 10h
@@ -140,33 +157,12 @@ intela:                               ; Função que incia o modo video e printa
     int 10h
     ret
 
-endP:                                   ; Função que termina o programa
+endP:                                       ; Função que termina o programa
     jmp $
 
-print_S:
-    mov si, sim
-    call intela
-    call prints
-    ret
-
-print_N:
-    mov si, nao
-    call intela
-    .loop:
-        lodsb
-        cmp al, 0
-        je endP
-        mov ah, 0xe
-        mov bh, 0
-        mov bl, 0xe
-        int 10h
-        jmp .loop
-        ret
-    ret
-
-prints:             ; mov si, string
+prints:                                     ; mov si, string
   .loop:
-    lodsb           ; bota character em al 
+    lodsb                                   ; bota character em al 
     cmp al, 0
     je .endloop
     call putchar
@@ -174,22 +170,21 @@ prints:             ; mov si, string
   .endloop:
   ret
 
-start:                                  ; main
+start:                                      ; main
     xor ax, ax
     mov ds, ax
     mov es, ax
-;#################                      ; recebendo o valor de entradas
+    ; recebendo o valor de entradas
     ;call intela
     mov di, qtd
     call gets
-    mov di, string
+    mov si, qtd
+    call stoi
     mov bl, al
     mov di, string
     call resolve
     pop dx
     cmp dl, 10
-    je print_S
-    jne print_N
 
 
 times 510 - ($-$$) db 0
