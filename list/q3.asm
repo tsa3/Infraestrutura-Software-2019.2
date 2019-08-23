@@ -1,3 +1,5 @@
+; https://github.com/tsa3/Infraestrutura-Software-2019.1.git
+
 org 0x7c00
 jmp 0x0000:start
 
@@ -37,19 +39,21 @@ gets:                                       ; mov di, string
     call putchar
     
     jmp .loop1
-    .backspace:
-      cmp cl, 0       ; is empty?
-      je .loop1
-      dec di
-      dec cl
-      mov byte[di], 0
-      call delchar
+
+  .backspace:
+    cmp cl, 0       ; is empty?
+    je .loop1
+    dec di
+    dec cl
+    mov byte[di], 0
+    call delchar
     jmp .loop1
+
   .done:
-  mov al, 0
-  stosb
-  call endl
-  ret
+    mov al, 0
+    stosb
+    call endl
+    ret
 
 delchar:
     mov al, 0x08                        ; backspace
@@ -87,27 +91,22 @@ stoi:                                       ; mov si, string (String to integer)
 
 resolve:                                    ; adaptação da antiga gets, necessita de mov di, string
     xor cx, cx                              ; zerar contador
+    mov cx, bx
     .check:                                 ; testar o contador, pra não ler mais do que a quantidade dada pela entrada
         mov di, string
-        xor cx,cx
-        cmp bx, 0
+        cmp cl, 0
         je .done
-        dec bl
+        dec cl
         jne .loop1
 
     .loop1:
         call getchar
-        cmp al, 0x08                        ; backspace
-        je .backspace
         cmp ax, ' '                          ; compara com ' '
-        je .loop1
-        cmp cl, 30                          ; string limit checker
         je .loop1
         cmp al, 0x0d                        ; se a última tecla foi enter deve ir pra carregar resposta
         je .result
 
         stosb
-        inc cl
         mov ah, 0xe
         mov bh, 0
         mov bl, 0xe
@@ -123,7 +122,7 @@ resolve:                                    ; adaptação da antiga gets, necess
 
         jmp .loop1
 
-        ; cmp sp, 10                          ; compara o topo da pilha com 10
+        ; cmp sp, 10                            ; compara o topo da pilha com 10
         ; jne .serase                           ; se o topo for 10, essa é a primeira interação
         ; pop ax
             
@@ -140,16 +139,12 @@ resolve:                                    ; adaptação da antiga gets, necess
             xor dx, dx
             jmp .loop1
 
-        .check_parentesis:                  ; função pra checar parêntesis
+        .check_parentesis:                      ; função pra checar parêntesis
             sub dl,1                            ; soma de volta 1
             cmp al,dl                       
             jne .back_to_stack                  ; se não forem iguais, mandamos ambos de volta pra pilha
             je .loop1                           ; se sim, voltamos a rotina
 
-        .take_it_back:
-            push dx
-            push ax
-            jmp .loop1
 
         .back_to_stack:
             sub dl, 1                           ; dl volta ao valor inicial
@@ -157,15 +152,15 @@ resolve:                                    ; adaptação da antiga gets, necess
             push ax                             ; inclui o ax na pilha
             jmp .loop1                          ; volta pra check
 
-        .backspace:
-            cmp cl, 0                           ; is empty?
-            je .loop1   
-            dec di
-            dec cl
-            pop bx
-            mov byte[di], 0
-            call delchar
-            jmp .loop1
+        ; .backspace:
+        ;     cmp cl, 0                           ; is empty?
+        ;     je .loop1   
+        ;     dec di
+        ;     dec cl
+        ;     pop bx
+        ;     mov byte[di], 0
+        ;     call delchar
+        ;     jmp .loop1
     
     .result:
         mov al, 0
@@ -236,7 +231,7 @@ start:                                      ; main
     call stoi                               ; não sei se essa parte tá funcionando
     ;ax = valor agora em inteiro
     mov bl, al                              ; bl = al
-    mov si, string
+    mov di, string
     call resolve
     call endP
 
