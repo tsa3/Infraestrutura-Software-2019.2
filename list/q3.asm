@@ -6,6 +6,7 @@ data:
     string times 10 db 0
     sim db 'S', 0
     nao db 'N', 0
+    teste db 'teste', 0
     contador times 16 db 0
 ; funções
 putchar:
@@ -87,6 +88,8 @@ stoi:                                       ; mov si, string (String to integer)
 resolve:                                    ; adaptação da antiga gets, necessita de mov di, string
     xor cx, cx                              ; zerar contador
     .check:                                 ; testar o contador, pra não ler mais do que a quantidade dada pela entrada
+        mov si, string
+        xor cx,cx
         cmp bx, 0
         je .done
         dec bl
@@ -117,6 +120,8 @@ resolve:                                    ; adaptação da antiga gets, necess
         cmp sp, 10                          ; compara o topo da pilha com 10
         jne .serase                           ; se o topo for 10, essa é a primeira interação
         pop ax
+        
+        jmp .loop1
 
         .serase:
             pop dx
@@ -224,9 +229,6 @@ start:                                      ; main
     mov bl, al                              ; bl = al
     mov si, string
     call resolve
-    pop dx
-    cmp dl, 10
-
-
+    call endP
 times 510 - ($-$$) db 0
 dw 0xaa55
