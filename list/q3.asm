@@ -225,7 +225,7 @@ start:                                      ; main
     mov di, qtd
     call gets
     mov si, qtd
-    call stoi
+    call stoi                               ; não sei se essa parte tá funcionando
     ;ax = valor agora em inteiro
     mov bl, al                              ; bl = al
     mov si, string
