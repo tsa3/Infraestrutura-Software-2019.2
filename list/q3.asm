@@ -113,21 +113,23 @@ resolve:                                    ; adaptação da antiga gets, necess
         mov bl, 0xe
         call putchar
 
-        ;pop dx                             ; remove a ponta da pilha
-        ;cmp dx, 10                         ; checa se é o primeiro elemento da pilha
-        ;je .take_it_back                   ; se for, devolve pra pilha
-        
-        cmp sp, 10                          ; compara o topo da pilha com 10
-        jne .serase                           ; se o topo for 10, essa é a primeira interação
-        pop ax
+        pop dx                             ; remove a ponta da pilha
+        cmp dx, 10                         ; checa se é o primeiro elemento da pilha
+        je .take_it_back                   ; se for, devolve pra pilha
+        jne .serase
+
+        ; cmp sp, 10                          ; compara o topo da pilha com 10
+        ; jne .serase                           ; se o topo for 10, essa é a primeira interação
+        ; pop ax
         
         jmp .loop1
 
         .serase:
-            pop dx
             add dl,2                            ; soma dois pra igualar [ com ] por exemplo já que [ = 133 e ] = 135 (ASCII)
             cmp al,dl                           ; compara eles dois para ver se são iguais, se forem, só deixa fora da pilha
             jne .check_parentesis               ; a diferença entre parentesis é um, já que ( = 50 e ) = 51 (ASCII)
+            xor ax, ax
+            xor dx, dx
             jmp .loop1
 
         .check_parentesis:                  ; função pra checar parêntesis
@@ -160,8 +162,7 @@ resolve:                                    ; adaptação da antiga gets, necess
     .result:
         mov al, 0
         stosb
-        pop dx
-        cmp dx,10
+        cmp sp,10
         je .equal
         jne .not_equal
         call endl
