@@ -5,7 +5,7 @@ jmp 0x0000:start
 
 data:
     qtd times 10 db 0
-    string times 10 db 0
+    string times 48 db 0
     sim db 'S', 0
     nao db 'N', 0
     teste db 'teste', 0
@@ -92,6 +92,9 @@ stoi:                                       ; mov si, string (String to integer)
 resolve:                                    ; adaptação da antiga gets, necessita de mov di, string
     xor cx, cx                              ; zerar contador
     mov cx, bx
+    ;adiciona 10 na pilha, pra ser o parametro de saber se tá vazia ou não
+    mov ax, 10
+    push ax
     .check:                                 ; testar o contador, pra não ler mais do que a quantidade dada pela entrada
         mov di, string
         cmp cl, 0
@@ -101,16 +104,17 @@ resolve:                                    ; adaptação da antiga gets, necess
 
     .loop1:
         call getchar
-        cmp ax, ' '                          ; compara com ' '
-        je .loop1
-        cmp al, 0x0d                        ; se a última tecla foi enter deve ir pra carregar resposta
-        je .result
-
+        
+        cmp al, ' '                          ; compara com ' '
         stosb
         mov ah, 0xe
         mov bh, 0
         mov bl, 0xe
         call putchar
+        je .loop1
+        
+        cmp al, 0x0d                        ; se a última tecla foi enter deve ir pra carregar resposta
+        je .result
 
         cmp al, '['
         je .push_on_pill
@@ -121,12 +125,9 @@ resolve:                                    ; adaptação da antiga gets, necess
         jne .serase
 
         jmp .loop1
-
-        ; cmp sp, 10                            ; compara o topo da pilha com 10
-        ; jne .serase                           ; se o topo for 10, essa é a primeira interação
-        ; pop ax
             
         .push_on_pill:
+            mov ah,0
             push ax
             jmp .loop1
     
@@ -152,20 +153,15 @@ resolve:                                    ; adaptação da antiga gets, necess
             push ax                             ; inclui o ax na pilha
             jmp .loop1                          ; volta pra check
 
-        ; .backspace:
-        ;     cmp cl, 0                           ; is empty?
-        ;     je .loop1   
-        ;     dec di
-        ;     dec cl
-        ;     pop bx
-        ;     mov byte[di], 0
-        ;     call delchar
-        ;     jmp .loop1
+
     
     .result:
         mov al, 0
         stosb
-        cmp sp,10
+        pop dx
+        cmp dx,10
+        mov dx, 10
+        push dx
         je .equal
         jne .not_equal
         call endl
@@ -173,7 +169,9 @@ resolve:                                    ; adaptação da antiga gets, necess
 
     .equal:
         mov si, sim
+        call endl
         call prints
+        call endl
         jmp .check
     
     .not_equal:
@@ -219,10 +217,7 @@ start:                                      ; main
     xor ax, ax
     mov ds, ax
     mov es, ax
-    ;adiciona 10 na pilha, pra ser o parametro de saber se tá vazia ou não
-    add ax, 10
-    pop ax
-    xor ax, ax
+
     call intela
     ; recebendo o valor de entradas
     mov di, qtd
