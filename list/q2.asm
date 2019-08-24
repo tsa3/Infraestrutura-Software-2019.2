@@ -74,7 +74,8 @@ prints:             ; mov si, string
     call putchar
     jmp .loop
   .endloop:
-  ret
+    call endl
+    ret
 
 stoi:                ; mov si, string
   xor cx, cx
@@ -174,55 +175,65 @@ gdc:
         je .one_first
         cmp cx, 1
         je .one_second
-        push cx
-        push bx
         .loop_euclidian:
-          push bx
+          push bx    
           push cx
           mov ax, bx ;dividento: ax | dividor: cx | quociente: ax | resto: dx
+          mov dx, 0
           div cx
           pop bx
           mov cx, dx
-          pop ax
-          pop ax
-          cmp bx, 0
+          cmp cx, 0
           je .finish_rest_zero
           cmp cx, 1
           je .finish_rest_one
-          jne .loop_euclidian
-          .finish_rest_zero:
-            mov di, result
-            mov ax, bx
-            call tostring
-            mov si, result
-            call prints
-            ret
-          .finish_rest_one:
-            mov di, result
-            mov ax, cx
-            call tostring
-            mov si, result
-            call prints
-            ret
+          jmp .loop_euclidian
       .change:
         cmp bx, 1
         je .one_first
         cmp cx, 1
         je .one_second
-        .one_first:
-          mov di, result
-          mov ax, 1
-          call tostring
-          mov si, result
-          call prints
-          ret
-        .one_second:
-          mov di, result
-          mov ax, 1
-          call tostring
-          mov si, result
-          call prints
-          ret
+        .loop_euclidian_change:
+          push cx
+          push bx
+          mov ax, cx ;dividento: ax | dividor: cx | quociente: ax | resto: dx
+          mov dx, 0
+          div bx
+          pop cx
+          mov bx, dx
+          cmp bx, 0
+          je .finish_rest_one
+          cmp bx, 1
+          je .finish_rest_zero
+          jmp .loop_euclidian_change
+      .finish_rest_zero:
+        mov di, result
+        mov ax, bx
+        call tostring
+        mov si, result
+        call prints
+        ret
+      .finish_rest_one:
+        mov di, result
+        mov ax, cx
+        call tostring
+        mov si, result
+        call prints
+        ret
+      .one_first:
+        mov di, result
+        mov ax, 1
+        call tostring
+        mov si, result
+        call prints
+        ret
+      .one_second:
+        mov di, result
+        mov ax, 1
+        call tostring
+        mov si, result
+        call prints
+        ret
 
 start:
     xor ax, ax
