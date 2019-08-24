@@ -1,27 +1,29 @@
+# Caso seja colocado 0 em alguma das entradas o programa não apresenta o resultado correto
+# Não foi especificado no programa um tratamento caso apareça 0, por isso a resposta não fica correta nesse caso
 org 0x7c00
 jmp 0x0000:start
 
 data:
-    string1 times 10 db 0
-    string2 times 10 db 0
-    result times 10 db 0
+  string1 times 10 db 0
+  string2 times 10 db 0
+  result times 10 db 0
 
 putchar:
-    mov ah, 0x0e
-    int 10h
-    ret
+  mov ah, 0x0e
+  int 10h
+  ret
   
 getchar:
-    mov ah, 0x00
-    int 16h
-    ret
+  mov ah, 0x00
+  int 16h
+  ret
   
-gets:                 ; mov di, string
+gets:                
   .loop1:
     call getchar
-    cmp al, 0x08      ; backspace
+    cmp al, 0x08      
     je .backspace
-    cmp al, 0x0d      ; carriage return
+    cmp al, 0x0d    
     je .done
     
     stosb
@@ -34,7 +36,7 @@ gets:                 ; mov di, string
     
     jmp .loop1
     .backspace:
-      cmp cl, 0       ; is empty?
+      cmp cl, 0       
       je .loop1
       dec di
       dec cl
@@ -48,24 +50,24 @@ gets:                 ; mov di, string
     ret
 
 delchar:
-    mov al, 0x08                        ; backspace
-    call putchar
-    mov al, ' '
-    call putchar
-    mov al, 0x08                        ; backspace
-    call putchar
-    ret
-  
-endl:
-    mov al, 0x0a                        ; line feed
-    call putchar
-    mov al, 0x0d                        ; carriage return
-    call putchar
-    ret
+  mov al, 0x08                      
+  call putchar
+  mov al, ' '
+  call putchar
+  mov al, 0x08                        
+  call putchar
+  ret
 
-prints:             ; mov si, string
+endl:
+  mov al, 0x0a                       
+  call putchar
+  mov al, 0x0d                        
+  call putchar
+  ret
+
+prints:             
   .loop:
-    lodsb           ; bota character em al 
+    lodsb           
     cmp al, 0
     je .endloop
     mov ah, 0xe
@@ -77,7 +79,7 @@ prints:             ; mov si, string
     call endl
     ret
 
-stoi:                ; mov si, string
+stoi:               
   xor cx, cx
   xor ax, ax
   .loop1:
@@ -85,33 +87,20 @@ stoi:                ; mov si, string
     lodsb
     mov cl, al
     pop ax
-    cmp cl, 0        ; check EOF(NULL)
+    cmp cl, 0        
     je .endloop1
-    sub cl, 48       ; '9'-'0' = 9
+    sub cl, 48       
     mov bx, 10
-    mul bx           ; 999*10 = 9990
-    add ax, cx       ; 9990+9 = 9999
+    mul bx          
+    add ax, cx      
     jmp .loop1
   .endloop1:
   ret
 
-intela:                               ; Função que incia o modo video e printa uma tela preta pra carregar as cores
-    mov ah, 0
-    mov al, 12h
-    int 10h
-    mov ah, 0xb
-    mov al, 13h
-    int 10h
-    mov ah, 0xb
-    mov bh, 0
-    mov bl, 0
-    int 10h
-    ret
-
-reverse:              ; mov si, string
+reverse:              
   mov di, si
-  xor cx, cx          ; zerar contador
-  .loop1:             ; botar string na stack
+  xor cx, cx          
+  .loop1:             
     lodsb
     cmp al, 0
     je .endloop1
@@ -119,22 +108,22 @@ reverse:              ; mov si, string
     push ax
     jmp .loop1
   .endloop1:
-  .loop2:             ; remover string da stack        
+  .loop2:                   
     pop ax
     stosb
     loop .loop2
   ret
 
-tostring:              ; mov ax, int / mov di, string
+tostring:        
   push di
   .loop1:
     cmp ax, 0
     je .endloop1
     xor dx, dx
     mov bx, 10
-    div bx            ; ax = 9999 -> ax = 999, dx = 9
-    xchg ax, dx       ; swap ax, dx
-    add ax, 48        ; 9 + '0' = '9'
+    div bx           
+    xchg ax, dx       
+    add ax, 48       
     stosb
     xchg ax, dx
     jmp .loop1
@@ -150,9 +139,21 @@ tostring:              ; mov ax, int / mov di, string
   call reverse
   ret
   
+intela:         ; Função que incia o modo video e printa uma tela preta pra carregar as cores
+    mov ah, 0
+    mov al, 12h
+    int 10h
+    mov ah, 0xb
+    mov al, 13h
+    int 10h
+    mov ah, 0xb
+    mov bh, 0
+    mov bl, 0
+    int 10h
+    ret
 
-gdc:
-  pop ax ;Retira lixo da pilha
+gdc:            ;Função que calcula o GDC
+  pop ax        ;Retira lixo da pilha
   pop cx
   pop bx
   cmp bx, cx
@@ -163,14 +164,15 @@ gdc:
   jl .change
   ret
     .loop:
-      .equal:
+      .equal:  ;Caso os valores sejam iguais o GDC será esse valor
         mov ax, cx
         mov di, result
         call tostring
         mov si, result
+        call intela
         call prints
         ret
-      .normal:
+      .normal: ;Caso v1 > v2, será executado o algoritmo de euclides
         cmp bx, 1
         je .one_first
         cmp cx, 1
@@ -188,7 +190,7 @@ gdc:
           cmp cx, 1
           je .finish_rest_one
           jmp .loop_euclidian
-      .change:
+      .change: ;Caso v1 < v2, será executado o algoritmo de euclides com os números invertidos 
         cmp bx, 1
         je .one_first
         cmp cx, 1
@@ -211,6 +213,7 @@ gdc:
         mov ax, bx
         call tostring
         mov si, result
+        call intela
         call prints
         ret
       .finish_rest_one:
@@ -218,6 +221,7 @@ gdc:
         mov ax, cx
         call tostring
         mov si, result
+        call intela
         call prints
         ret
       .one_first:
@@ -225,6 +229,7 @@ gdc:
         mov ax, 1
         call tostring
         mov si, result
+        call intela
         call prints
         ret
       .one_second:
@@ -232,6 +237,7 @@ gdc:
         mov ax, 1
         call tostring
         mov si, result
+        call intela
         call prints
         ret
 
@@ -243,13 +249,13 @@ start:
     mov di, string1
     call gets
     mov si, string1
-    call stoi
-    push ax ; função stoi ta usando o dx, por isso não entra no caso de igual
+    call stoi ;Transforma a string em int
+    push ax   ;Adiciona o int na pilha
     mov di, string2
     call gets
     mov si, string2
-    call stoi
-    push ax
+    call stoi ;Transforma a string em int
+    push ax   ;Adiciona o int na pilha
     call gdc
     call end
 
