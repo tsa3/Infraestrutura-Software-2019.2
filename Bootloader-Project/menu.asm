@@ -23,13 +23,15 @@ start:
     call telainicial
 
     jmp exit
-
-telainicial:
+colorscreen:
     ;Colorindo a tela
     mov ah, 0xb
     mov bh, 0
-    mov bl, 15
+    mov bl, 4
     int 10h
+    ret
+telainicial:
+    call colorscreen
 
     ;Setando o cursor
     mov ah, 02h
@@ -75,11 +77,7 @@ telainicial:
         int 10h
 
         ;Muda cor da tela
-        mov ah, 0xb
-        mov bh, 0
-        mov bl, 15
-        int 10h
-
+        call colorscreen
         ;Setando o cursor
         mov ah, 02h
         mov bh, 00h
@@ -89,6 +87,7 @@ telainicial:
 
         ;Imprime Guide
         mov ah, 0xf
+        mov bl, 0xf
         mov si, guide
         call prints
         call endl
@@ -98,6 +97,7 @@ telainicial:
         mov bh, 00h
         mov dh, 03h
         mov dl, 07h
+        mov bl, 0xf
         int 10h
         mov si, instruction
         call prints
