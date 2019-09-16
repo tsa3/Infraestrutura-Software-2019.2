@@ -4,14 +4,17 @@ jmp 0x0000:start
 data:
 	map db  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,2,8,-1,8,15,15,7,7,15,15,15,15,15,7,15,7,7,15,7,15,15,15,15,15,7,7,15,8,-1,8,15,7,7,7,15,7,7,7,15,7,15,15,15,15,15,15,7,7,7,7,7,7,15,8,-1,8,15,15,15,15,15,15,15,7,15,7,15,7,7,7,7,15,7,7,15,15,15,15,15,8,-1,8,15,7,7,7,7,7,7,7,7,7,15,15,15,7,7,15,15,15,15,7,7,7,7,8,-1,8,15,7,7,15,15,15,15,15,7,7,15,7,7,7,7,7,7,7,7,7,7,15,15,8,-1,8,15,7,7,15,7,7,7,15,7,7,15,15,15,15,15,7,7,15,15,15,15,15,7,8,-1,8,15,15,15,15,7,7,15,15,15,7,7,7,7,7,15,7,7,15,7,7,7,15,7,8,-1,8,7,7,7,15,7,7,7,7,15,15,15,15,15,7,15,15,15,15,7,15,7,15,7,8,-1,8,7,15,15,15,15,15,15,7,7,15,7,7,7,7,7,7,7,7,7,15,7,15,7,8,-1,8,15,15,7,7,7,7,15,15,7,15,15,15,15,15,15,15,15,15,15,15,15,15,7,8,-1,8,7,15,15,15,15,7,7,15,7,7,7,7,7,7,7,7,15,7,7,7,7,7,7,8,-1,8,7,7,7,7,15,7,7,15,15,15,15,15,15,15,7,7,15,7,15,15,15,15,7,8,-1,8,7,7,15,15,15,15,15,15,7,7,7,7,7,15,7,7,7,7,15,7,7,7,7,8,-1,8,7,7,15,7,7,7,7,15,7,7,15,7,7,15,15,15,15,15,15,15,15,7,15,8,-1,8,15,15,15,7,7,7,7,15,7,7,15,15,7,7,7,7,7,7,7,7,15,7,15,8,-1,8,15,7,15,15,15,15,15,15,7,7,7,15,15,15,15,15,15,15,15,7,7,7,15,8,-1,8,15,7,7,15,7,7,7,15,15,15,15,15,7,7,15,7,7,7,15,15,15,15,15,8,-1,8,4,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,-2
 	caracter db 1,1,-1,1,1,-2
-	caracterx db 25
-	caractery db 25
+	
 	linha dw 0
 	coluna dw 0
-	linhaper dw 450
-	colunaper dw 50
 	limitelinha dw 25
 	limitecoluna dw 25
+
+	personagemx dw 25
+	personagemy dw 425
+	limPerX dw 50
+	limPerY dw 450
+
 intela:                               ; Função que incia o modo vga e printa uma tela preta pra carregar as cores
     mov ah, 0
     mov al, 12h
@@ -82,11 +85,42 @@ printar:
 		ret
 printarpers:
 	mov si, caracter
-	.loop:
-		mov al, [si]
-		
-
+	mov dx, [personagemy] ; recebe o valor da coluna
+	.for1: 
+		cmp dl, [limPerY] ;cmpara se esta no limite
+		je .endfor1
+		mov cx, [personagemx] ; mov o valor da posiçao linha
+		.for2:
+			cmp cl, [limPerX] ; compara se esta no limite
+			je .endfor2
+			call writePixel
+			inc cx
+			jmp .for2
+		.endfor2:
+		inc dx
+		jmp .for1
+	.endfor1:
 	ret
+movpers:
+	.loop:
+		mov ah, 0 ;Número da chamada.
+		int 16h
+		cmp al, 'w'
+		je .up
+		cmp al, 's'
+		je .down
+		cmp al, 'a'
+		je .left
+		cmp al, 'd'
+		je .right
+	.up:
+		
+	.down:
+
+	.left:
+	
+	.right:
+	
 start:
     xor ax, ax
     mov ds, ax
@@ -97,7 +131,7 @@ start:
 	mov cx, 0
 	mov dx, 0
 	call printar
-	;call printarpers
+	call printarpers
 
 
 exit:
