@@ -1,10 +1,12 @@
 org 0x8600
 jmp 0x0000:start
-
+;342
 data:
 	map db  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,2,8,-1,8,15,15,7,7,15,15,15,15,15,7,15,7,7,15,7,15,15,15,15,15,7,7,15,8,-1,8,15,7,7,7,15,7,7,7,15,7,15,15,15,15,15,15,7,7,7,7,7,7,15,8,-1,8,15,15,15,15,15,15,15,7,15,7,15,7,7,7,7,15,7,7,15,15,15,15,15,8,-1,8,15,7,7,7,7,7,7,7,7,7,15,15,15,7,7,15,15,15,15,7,7,7,7,8,-1,8,15,7,7,15,15,15,15,15,7,7,15,7,7,7,7,7,7,7,7,7,7,15,15,8,-1,8,15,7,7,15,7,7,7,15,7,7,15,15,15,15,15,7,7,15,15,15,15,15,7,8,-1,8,15,15,15,15,7,7,15,15,15,7,7,7,7,7,15,7,7,15,7,7,7,15,7,8,-1,8,7,7,7,15,7,7,7,7,15,15,15,15,15,7,15,15,15,15,7,15,7,15,7,8,-1,8,7,15,15,15,15,15,15,7,7,15,7,7,7,7,7,7,7,7,7,15,7,15,7,8,-1,8,15,15,7,7,7,7,15,15,7,15,15,15,15,15,15,15,15,15,15,15,15,15,7,8,-1,8,7,15,15,15,15,7,7,15,7,7,7,7,7,7,7,7,15,7,7,7,7,7,7,8,-1,8,7,7,7,7,15,7,7,15,15,15,15,15,15,15,7,7,15,7,15,15,15,15,7,8,-1,8,7,7,15,15,15,15,15,15,7,7,7,7,7,15,7,7,7,7,15,7,7,7,7,8,-1,8,7,7,15,7,7,7,7,15,7,7,15,7,7,15,15,15,15,15,15,15,15,7,15,8,-1,8,15,15,15,7,7,7,7,15,7,7,15,15,7,7,7,7,7,7,7,7,15,7,15,8,-1,8,15,7,15,15,15,15,15,15,7,7,7,15,15,15,15,15,15,15,15,7,7,7,15,8,-1,8,15,7,7,15,7,7,7,15,15,15,15,15,7,7,15,7,7,7,15,15,15,15,15,8,-1,8,4,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,-2
-	caracter db 1,1,-1,1,1,-2
 	
+	caracter db 1
+	clear db 15
+
 	linha dw 0
 	coluna dw 0
 	limitelinha dw 25
@@ -33,6 +35,7 @@ writePixel:
 	mov bl, [si]
 	int 10h
 	ret
+	
 drawImg: ;antes de usar, precisamos dizer quem s1 vai pegar
 	mov dx, [coluna] ; recebe o valor da coluna
 	.for1: 
@@ -83,8 +86,8 @@ printar:
 		jmp .loop
 	.fim:
 		ret
+		
 printarpers:
-	mov si, caracter
 	mov dx, [personagemy] ; recebe o valor da coluna
 	.for1: 
 		cmp dl, [limPerY] ;cmpara se esta no limite
@@ -101,7 +104,11 @@ printarpers:
 		jmp .for1
 	.endfor1:
 	ret
+
+
+
 movpers:
+	mov di, si
 	.loop:
 		mov ah, 0 ;Número da chamada.
 		int 16h
@@ -113,13 +120,91 @@ movpers:
 		je .left
 		cmp al, 'd'
 		je .right
+		jmp .loop
 	.up:
-		
+		mov bx, si
+		sub bx, 20
+		mov si, bx
+		mov al, byte[si]
+		cmp al, 15
+		je .validaUp
+		mov si, di
+		jmp .loop
 	.down:
-
+		mov bx, 20
+		add si, bx
+		cmp byte[si], 15
+		je .validadown
+		jne .loop
+		mov si, di
 	.left:
-	
+		mov bx, -1
+		add si, bx
+		cmp byte[si], 15
+		je .validaleft
+		jne .loop
+		mov si, di
 	.right:
+		mov bx, 1
+		add si, bx
+		cmp byte[si], 15
+		je .validadown
+		jne .loop
+		mov si, di
+	.validaUp:
+		mov bl, 3
+		call printarpers
+		mov bx, word[personagemy]
+		sub bx, 25
+		mov word[personagemy], bx
+		mov bx, word[limPerY]
+		sub bx, 25
+		mov word[limPerY], bx
+		mov bx, di
+		sub bx, 20
+		mov di, bx
+		mov si, caracter
+		call printarpers
+		mov si, di
+		jmp .loop
+
+	.validadown:
+		mov si, clear
+		call printarpers
+		mov bx, 25
+		add word[personagemy], bx
+		add word[limPerY], bx
+		mov bx, 20
+		add si, bx
+		mov di, si
+		call printarpers
+		mov si, di
+		jmp .loop
+	.validaleft:
+		mov si, clear
+		call printarpers
+		mov bx, 25
+		add word[personagemx], bx
+		add word[limPerX], bx
+		mov bx, -1
+		add si, bx
+		mov di, si
+		call printarpers
+		mov si, di
+		jmp .loop
+	.validaright:
+		mov si, clear
+		call printarpers
+		mov bx, 25
+		add word[personagemx], bx
+		add word[limPerX], bx
+		mov bx, 1
+		add si, bx
+		mov di, si
+		call printarpers
+		mov si, di
+		jmp .loop
+
 	
 start:
     xor ax, ax
@@ -131,7 +216,11 @@ start:
 	mov cx, 0
 	mov dx, 0
 	call printar
+	mov si, caracter
 	call printarpers
-
+	mov si, map
+	mov bx, 342
+	add si, bx
+	call movpers
 
 exit:
