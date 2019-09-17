@@ -17,6 +17,9 @@ data:
 	limPerX dw 50
 	limPerY dw 450
 
+	coisinha dw 0
+	posicao dw 443
+
 intela:                               ; Função que incia o modo vga e printa uma tela preta pra carregar as cores
     mov ah, 0
     mov al, 12h
@@ -35,7 +38,7 @@ writePixel:
 	mov bl, [si]
 	int 10h
 	ret
-	
+
 drawImg: ;antes de usar, precisamos dizer quem s1 vai pegar
 	mov dx, [coluna] ; recebe o valor da coluna
 	.for1: 
@@ -108,8 +111,15 @@ printarpers:
 
 
 movpers:
-	mov di, si
 	.loop:
+		mov si, map
+		mov bx, word[posicao]
+		add si, bx
+		mov di, si
+		mov al, [si]
+		cmp al, 2
+		je .victory
+		xor ax, ax
 		mov ah, 0 ;Número da chamada.
 		int 16h
 		cmp al, 'w'
@@ -123,36 +133,44 @@ movpers:
 		jmp .loop
 	.up:
 		mov bx, si
-		sub bx, 20
+		sub bx, 26
 		mov si, bx
 		mov al, byte[si]
 		cmp al, 15
 		je .validaUp
+		cmp al, 2
+		je .victory
 		mov si, di
 		jmp .loop
 	.down:
-		mov bx, 20
-		add si, bx
-		cmp byte[si], 15
+		mov bx, si
+		add bx, 26
+		mov si, bx
+		mov al, byte[si]
+		cmp al, 15
 		je .validadown
-		jne .loop
 		mov si, di
+		jmp .loop
 	.left:
-		mov bx, -1
-		add si, bx
-		cmp byte[si], 15
+		mov bx, si
+		sub bx, 1
+		mov si, bx
+		mov al, byte[si]
+		cmp al, 15
 		je .validaleft
-		jne .loop
 		mov si, di
+		jmp .loop
 	.right:
-		mov bx, 1
-		add si, bx
-		cmp byte[si], 15
-		je .validadown
-		jne .loop
+		mov bx, si
+		add bx, 1
+		mov si, bx
+		mov al, byte[si]
+		cmp al, 15
+		je .validaright
 		mov si, di
+		jmp .loop
 	.validaUp:
-		mov bl, 3
+		mov si, clear
 		call printarpers
 		mov bx, word[personagemy]
 		sub bx, 25
@@ -160,51 +178,110 @@ movpers:
 		mov bx, word[limPerY]
 		sub bx, 25
 		mov word[limPerY], bx
-		mov bx, di
-		sub bx, 20
-		mov di, bx
-		mov si, caracter
+		;mov di, bx
+		xor ax, ax
+		mov ax, [caracter]
+		mov si, ax
 		call printarpers
-		mov si, di
+		;mov si, map
+		mov ax, 0
+		mov ax, 26
+		mov bx, word[posicao]
+		sub bx, ax
+		mov word[posicao], bx
 		jmp .loop
+		;mov ax, [coisinha]
+		;add bx, ax
+		;mov si, map
+		;add si, bx
+		;mov di, si
 
 	.validadown:
 		mov si, clear
 		call printarpers
-		mov bx, 25
-		add word[personagemy], bx
-		add word[limPerY], bx
-		mov bx, 20
-		add si, bx
-		mov di, si
+		mov bx, word[personagemy]
+		add bx, 25
+		mov word[personagemy], bx
+		mov bx, word[limPerY]
+		add bx, 25
+		mov word[limPerY], bx
+		;mov di, bx
+		xor ax, ax
+		mov ax, [caracter]
+		mov si, ax
 		call printarpers
-		mov si, di
+		;mov si, map
+		mov ax, 0
+		mov ax, 26
+		mov bx, word[posicao]
+		add bx, ax
+		mov word[posicao], bx
 		jmp .loop
+		;mov ax, [coisinha]
+		;add bx, ax
+		;mov si, map
+		;add si, bx
+		;mov di, si
+
 	.validaleft:
 		mov si, clear
 		call printarpers
-		mov bx, 25
-		add word[personagemx], bx
-		add word[limPerX], bx
-		mov bx, -1
-		add si, bx
-		mov di, si
+		mov bx, word[personagemx]
+		sub bx, 25
+		mov word[personagemx], bx
+		mov bx, word[limPerX]
+		sub bx, 25
+		mov word[limPerX], bx
+		;mov di, bx
+		xor ax, ax
+		mov ax, [caracter]
+		mov si, ax
 		call printarpers
-		mov si, di
+		;mov si, map
+		mov ax, 0
+		mov ax, 1
+		mov bx, word[posicao]
+		sub bx, ax
+		mov word[posicao], bx
 		jmp .loop
+		;mov ax, [coisinha]
+		;add bx, ax
+		;mov si, map
+		;add si, bx
+		;mov di, si
 	.validaright:
 		mov si, clear
 		call printarpers
-		mov bx, 25
-		add word[personagemx], bx
-		add word[limPerX], bx
-		mov bx, 1
-		add si, bx
-		mov di, si
+		mov bx, word[personagemx]
+		add bx, 25
+		mov word[personagemx], bx
+		mov bx, word[limPerX]
+		add bx, 25
+		mov word[limPerX], bx
+		;mov di, bx
+		xor ax, ax
+		mov ax, [caracter]
+		mov si, ax
 		call printarpers
-		mov si, di
+		;mov si, map
+		mov ax, 0
+		mov ax, 1
+		mov bx, word[posicao]
+		add bx, ax
+		mov word[posicao], bx
 		jmp .loop
-
+		;mov ax, [coisinha]
+		;add bx, ax
+		;mov si, map
+		;add si, bx
+		;mov di, si
+.victory:
+	call intela
+	mov ah, 0xb
+    mov bh, 0
+    mov bl, 4
+    int 10h
+    ret
 	
 start:
     xor ax, ax
@@ -218,9 +295,9 @@ start:
 	call printar
 	mov si, caracter
 	call printarpers
-	mov si, map
-	mov bx, 342
-	add si, bx
+	;mov si, map
+	;mov bx, [posicao]
+	;add si, bx
 	call movpers
 
 exit:
