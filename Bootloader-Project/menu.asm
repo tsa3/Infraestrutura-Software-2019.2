@@ -6,6 +6,7 @@ jmp 0x0000:start
 title db 'Adventure Bit', 13
 begin db 'Play', 13
 guide db 'Guide', 13
+credits db 'Credits', 13
 
 ;Regras
 instruction             db 'O jogo consiste em percorrer o menor caminho para fugir labirinto', 13
@@ -14,6 +15,9 @@ up                      db 'W - Up', 13
 down                    db 'S - Down', 13
 left                    db 'A - Left', 13
 right                   db 'D - right', 13
+ahac			db 'Arthur Henrique - ahac', 13
+jpspm			db 'Joao Pedro      - jpspm', 13
+tsa3			db 'Thiago Araujo   - tsa3', 13
 
 start:
     mov ah, 0
@@ -153,6 +157,45 @@ telainicial:
         call prints
         call endl
 
+        ;Credits
+        mov ah, 02h
+        mov bh, 00h
+        mov dh, 12h
+        mov dl, 07h
+        int 10h
+        mov si, credits
+        call prints
+        call endl
+
+        ;a
+        mov ah, 02h
+        mov bh, 00h
+        mov dh, 13h
+        mov dl, 07h
+        int 10h
+        mov si, ahac
+        call prints
+        call endl
+
+        ;j
+        mov ah, 02h
+        mov bh, 00h
+        mov dh, 14h
+        mov dl, 07h
+        int 10h
+        mov si, jpspm
+        call prints
+        call endl
+
+        ;t
+        mov ah, 02h
+        mov bh, 00h
+        mov dh, 15h
+        mov dl, 07h
+        int 10h
+        mov si, tsa3
+        call prints
+        call endl
         wait_return:
             mov ah, 0
             int 16h

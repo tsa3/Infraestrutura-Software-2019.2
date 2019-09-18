@@ -20,6 +20,8 @@ data:
 	coisinha dw 0
 	posicao dw 443
 
+	win db 'Congratulations!!! You win the game!', 13
+
 intela:                               ; Função que incia o modo vga e printa uma tela preta pra carregar as cores
     mov ah, 0
     mov al, 12h
@@ -178,23 +180,16 @@ movpers:
 		mov bx, word[limPerY]
 		sub bx, 25
 		mov word[limPerY], bx
-		;mov di, bx
 		xor ax, ax
 		mov ax, [caracter]
 		mov si, ax
 		call printarpers
-		;mov si, map
 		mov ax, 0
 		mov ax, 26
 		mov bx, word[posicao]
 		sub bx, ax
 		mov word[posicao], bx
 		jmp .loop
-		;mov ax, [coisinha]
-		;add bx, ax
-		;mov si, map
-		;add si, bx
-		;mov di, si
 
 	.validadown:
 		mov si, clear
@@ -205,23 +200,16 @@ movpers:
 		mov bx, word[limPerY]
 		add bx, 25
 		mov word[limPerY], bx
-		;mov di, bx
 		xor ax, ax
 		mov ax, [caracter]
 		mov si, ax
 		call printarpers
-		;mov si, map
 		mov ax, 0
 		mov ax, 26
 		mov bx, word[posicao]
 		add bx, ax
 		mov word[posicao], bx
 		jmp .loop
-		;mov ax, [coisinha]
-		;add bx, ax
-		;mov si, map
-		;add si, bx
-		;mov di, si
 
 	.validaleft:
 		mov si, clear
@@ -232,23 +220,16 @@ movpers:
 		mov bx, word[limPerX]
 		sub bx, 25
 		mov word[limPerX], bx
-		;mov di, bx
 		xor ax, ax
 		mov ax, [caracter]
 		mov si, ax
 		call printarpers
-		;mov si, map
 		mov ax, 0
 		mov ax, 1
 		mov bx, word[posicao]
 		sub bx, ax
 		mov word[posicao], bx
 		jmp .loop
-		;mov ax, [coisinha]
-		;add bx, ax
-		;mov si, map
-		;add si, bx
-		;mov di, si
 	.validaright:
 		mov si, clear
 		call printarpers
@@ -258,30 +239,54 @@ movpers:
 		mov bx, word[limPerX]
 		add bx, 25
 		mov word[limPerX], bx
-		;mov di, bx
 		xor ax, ax
 		mov ax, [caracter]
 		mov si, ax
 		call printarpers
-		;mov si, map
 		mov ax, 0
 		mov ax, 1
 		mov bx, word[posicao]
 		add bx, ax
 		mov word[posicao], bx
 		jmp .loop
-		;mov ax, [coisinha]
-		;add bx, ax
-		;mov si, map
-		;add si, bx
-		;mov di, si
 .victory:
 	call intela
 	mov ah, 0xb
     mov bh, 0
     mov bl, 4
     int 10h
-    ret
+	mov si, win
+	;Muda a posição onde a string será printada
+	mov ah, 02h
+	mov bh, 00h
+	mov dh, 14
+	mov dl, 14h
+	int 10h
+	;Printa a string
+	call .prints
+    call .wait_return
+	jmp 0x7E00
+	.prints:
+		lodsb 
+
+		mov ah, 0xe
+		mov bh, 0
+		mov bl, 0xf
+		int 10h
+
+		cmp al, 13
+		jne .prints
+
+		ret
+	.wait_return:
+		mov ah, 0
+		int 16h
+
+		cmp al, 13
+		jne .wait_return
+		
+		ret
+
 	
 start:
     xor ax, ax
@@ -295,9 +300,7 @@ start:
 	call printar
 	mov si, caracter
 	call printarpers
-	;mov si, map
-	;mov bx, [posicao]
-	;add si, bx
 	call movpers
 
 exit:
+	jmp 0x7E00
