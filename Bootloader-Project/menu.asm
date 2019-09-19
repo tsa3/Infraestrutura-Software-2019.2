@@ -7,9 +7,10 @@ title db 'Adventure Bit', 13
 begin db 'Play', 13
 guide db 'Guide', 13
 credits db 'Credits', 13
+press_enter db 'Please, press enter to retorne to the menu', 13
 
 ;Regras
-instruction             db 'O jogo consiste em percorrer o menor caminho para fugir labirinto', 13
+instruction             db 'The objective of the game is find the smallest way to get out of the maze', 13
 instructions_to_play    db 'How to play', 13
 up                      db 'W - Up', 13
 down                    db 'S - Down', 13
@@ -196,6 +197,17 @@ telainicial:
         mov si, tsa3
         call prints
         call endl
+
+        ;pres_enter
+        mov ah, 02h
+        mov bh, 00h
+        mov dh, 19h
+        mov dl, 14h
+        int 10h
+        mov si, press_enter
+        call prints
+        call endl
+        
         wait_return:
             mov ah, 0
             int 16h
@@ -307,8 +319,8 @@ change_cursor:
 
         mov ah, 02h
         mov bh, 00h
-        mov dl, 12h
-        mov dh, 10h
+        mov dh, 12h
+        mov dl, 10h
         int 10h
 
         mov ah, 0xe
@@ -343,9 +355,9 @@ putchar:
     ret
 
 endl:
-    mov al, 0x0a            ; line feed
+    mov al, 0x0a            
     call putchar
-    mov al, 0x0d            ; carriage return
+    mov al, 0x0d           
     call putchar
     ret
 
@@ -363,23 +375,31 @@ prints:
 
 jogo:
 ;Setando a posição do disco onde kernel.asm foi armazenado(ES:BX = [0x500:0x0])
-	mov ax,0x860		;0x50<<1 + 0 = 0x500
+    ;0x50<<1 + 0 = 0x500
+	mov ax,0x860		
 	mov es,ax
-	xor bx,bx		;Zerando o offset
+    ;Zerando o offset
+	xor bx,bx		
 
 ;Setando a posição da Ram onde o jogo será lido
-	mov ah, 0x02	;comando de ler setor do disco
-	mov al,8		;quantidade de blocos ocupados por jogo
-	mov dl,0		;drive floppy
+    ;comando de ler setor do disco
+	mov ah, 0x02	
+    ;quantidade de blocos ocupados por jogo
+	mov al,8		
+    ;drive floppy
+	mov dl,0		
 
 ;Usaremos as seguintes posições na memoria:
-	mov ch,0		;trilha 0
-	mov cl,7		;setor 2
-	mov dh,0		;cabeca 0
+    ;trilha 0
+	mov ch,0		
+    ;setor 2
+	mov cl,7		
+    ;cabeca 0
+	mov dh,0		
 	int 13h
-	jc jogo	;em caso de erro, tenta de novo
-
+	jc jogo	
+;Pula para a posição do kernel
 break:	
-	jmp 0x8600 		        ; Pula para a posição carregada
+	jmp 0x8600 		        
 
 exit:
