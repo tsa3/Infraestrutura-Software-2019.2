@@ -1,0 +1,4 @@
+nome: Nome do usuário
+id: Identificação exclusiva do usuário
+ultimo_Acesso: A quantidade de dias no qual o usuário está inativo 
+pontuacao: A pontuação de atividade do usuário. 0 ≤pontuacao ≤1
