@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
     if(count == 1000000){
-    printf("%lld\n", count);
+    printf("a Execucao terminou\n");
     }
     pthread_exit(NULL);
     return 0;
