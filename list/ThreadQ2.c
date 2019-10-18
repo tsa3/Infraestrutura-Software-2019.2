@@ -32,88 +32,157 @@ cada usuário aparece pelo menos uma vez em cada arquivo e somente em um arquivo
 #include <stdbool.h>
 #include <math.h>
 
-#define TRUE 1
-#define FALSE 0
-#define MAX_ARQUIVOS "8"
-#define QTD_USERS "4"
+#define PALMEIRAS_SEM_MUNDIAL 1
+#define TRUE    1
+#define FALSE   0
+#define NAO_DEFINIDO -1
+#define READ    0
+#define WRITE   1
 
-int                 N, A, T;                                                                            //  A = Arquivos, N = Número de usuários, T = Threads    
+int                 N, A, T;                                            //  A = Arquivos, N = Número de usuários, T = Threads
+double              soma;
 FILE                *arquivo;
-pthread_mutex_t     MEU_MUTEX = PTHREAD_MUTEX_INITIALIZER;                                              // Mutex único
-bool                *ALREADY_READ;                                                                      // Pra saber se o arquivo[i] já foi lido ou não.
-char                banco[10] = "banco";
+bool                *ALREADY_READ;                                      // Pra saber se o arquivo[i] já foi lido ou não.
+pthread_mutex_t     check_files         = PTHREAD_MUTEX_INITIALIZER;    // Mutex para escolher arquivo a ser lido 
+pthread_mutex_t     Somador             = PTHREAD_MUTEX_INITIALIZER;    // Mutex para soma
+char                extension[5]        = ".txt";                       
+bool                operation;                                          // Operação que será realizada pela thread, 0 para apenas ler, 1 para escrever
 
-typedef struct persona                                                                                  // Estrutura padrão pra cada usuário
+typedef struct persona                                                  // Estrutura padrão pra cada usuário
 {   
     char    NOME[50];
-    char    ID[10];    
+    char    ID[100];    
     int     ULTIMO_ACESSO;
     double  PONTUACAO;
 }persona;
 
 persona *DADOS;
 
-void *inc(void *threadid)
-{                                                                                                       // Thread geral de leitura de arquivo
-    int i = 0;                                      
-    int j = 1;                                      
-    while(1)
+void *thread(){
+    double Somatorio = 0;                                                                                   // Recebe a soma dos arquivos
+    while(PALMEIRAS_SEM_MUNDIAL)
     {
-        if(ALREADY_READ[j] == FALSE && j <= A)                                                              // Se arquivo não tiver sido lido ainda
-        {
-            ALREADY_READ[j] = TRUE;
-
+        int cnt;
+        int SELETOR_ARQUIVO = NAO_DEFINIDO;
+        FILE *arquivo, arquivo_saida;
+        for(cnt = 0; i < A; i++)
+        {                                                                                                   // Procurar arquivo ainda não lido
+            pthread_mutex_lock(&check_files);
+            if(ALREADY_READ[cnt] == FALSE)
+            {
+                ALREADY_READ[cnt]   == TRUE;
+                SELETOR_ARQUIVO     = j+1;
+                break;
+            }
+            pthread_mutex_unlock(&check_files);
         }
-        else if (j<A) j++;
+
+        if(SELETOR_ARQUIVO == NAO_DEFINIDO)
+        {                                                                                                   // Já não há arquivos para serem lido
+            pthread_mutex_lock(&Somador);                                                                   // Travamos o mutex para que possamos somar na variavel de soma global
+            soma += Somatorio;
+            pthread_mutex_unlock(&Somador);
+            pthread_exit(NULL);                                                                             // Terminamos a busca
+        }
+        
+        snprintf(aux, "banco%d.%s",SELETOR_ARQUIVO,extension);                                              // Colocar na variavel aux a seguinte forma: bancoX.txt
+        arquivo     = fopen(aux, "r+");                                                                     // Abrimos o arquivo de leitura e escrita
+        snprintf(aux,"banco%d_saida.%s",SELETOR_ARQUIVO,extension); 
+        arquivo_saida   = fopen(aux, "r+");                                                                 // Aqui é onde fica salva a saída do arquivo, com os devidos usuários apagados
+
+        if(arquivo == NULL || arquivo_saida == NULL)
+        {
+            printf("O arquivo %d base ou o de saída não foi aberto\n", SELETOR_ARQUIVO);
+            pthread_exit(NULL);
+        }
+
+        while(fscanf(arq, " %s %s %i %lf", DADOS[SELETOR_ARQUIVO].NOME, DADOS[SELETOR_ARQUIVO].ID, &DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO, &DADOS[SELETOR_ARQUIVO].PONTUACAO) != EOF)    // Ler enquanto não for fim de arquivo (End Of File)
+        {                                                                                                   
+            if(operation == READ)                                                                                           // Se o operation for READ, iremos apenas ler os valores e somar à variável local
+            {                                                                                                       
+                Somatorio += DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO/pow(DADOS[SELETOR_ARQUIVO].PONTUACAO,2);                  // Fórmula da média é media[i] = (ultimo_acesso[i]/(pontuacao[i]*pontuacao[i])/N);
+            }
+            else                                                                                                            // Se for WRITE, o usuário será avaliado
+            {                                                                                               
+                if((double)DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO/(pow(DADOS[SELETOR_ARQUIVO].PONTUACAO,2)) > soma*2)         // Se a média for maior, significa que está ausente demais e que deve ser excluído
+                {                                                                                           
+                    printf("%s\n", DADOS[SELETOR_ARQUIVO].NOME);
+                }
+                else{                                                                                                       // Escrevemos o usuário no bancoX_saida
+                    fprintf(arq2,"%s %s %i %.2lf\n", DADOS[SELETOR_ARQUIVO].NOME, DADOS[SELETOR_ARQUIVO].ID, DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO, DADOS[SELETOR_ARQUIVO].PONTUACAO);
+                }
+            }
+        }
+        fclose(arquivo);                                                                                                    // Arquivos são fechados
+        fclose(arquivo_saida);
     }
-    
 }
 
-
 int main(){
-    
-    // Sessão de vetores
-    pthread_t   *VETOR_THREADS;
-    double      MEDIA_INAT;
-    
-    // Sessão de contadores
-    int         i;
-    
-    // Começando os trabalhos
-    
-    
-    printf("Colocamos "MAX_ARQUIVOS" arquivos para serem lidos, cada um deles com "QTD_USERS" usuarios distintos, ja que nao foram dadas informacoes sobre isso.\n");
-    printf(" O que te da uma quantidade de 8x4 usuarios para serem lidos.\n");
+    printf("AVISO: Os arquivos de RESPOSTA são os arquivos no formato bancoX_saida.txt!\n");
+    int         i,j, aux;
     printf("Digite a quantidade de Usuarios:");
     scanf("%d", &N);
     printf("\n");
     printf("Digite a quantidade de arquivos:");
     scanf("%d", &A);
     printf("\n");
-
-    while(A<2)
-    {                                                                                                   //  Tratamento da regra 1 (A >= 2)
+    
+    while(A<2)                                                  //  Tratamento da regra 1 (A >= 2)
+    {                                                           
         printf("Valor de A deve ser maior ou igual a dois\n");
         scanf("%d", &A);
     }
+
     scanf("%d", &T);
-    while(T > floor(A/2))
-    {                                                                                                   // Tratamento da quantidade de Threads
+    while(T > floor(A/2))                                       // Tratamento da quantidade de Threads
+    {                                                           
         printf("Quantidade de threads tem que ser menor que o piso de número de arquivos/2");
         scanf("%d", &T);
     }
 
-    ALREADY_READ    = (bool*)malloc(A * sizeof(bool));
-    VETOR_THREADS   = (pthread_t*)malloc(T * sizeof(pthread_t));
-    DADOS           = (persona*)malloc(A*sizeof(persona));
+    pthread_t *threads;                                         // Variável thread
+    threads         = (pthread*)malloc(T * sizeof(pthread));    // Vetor de threads
+    ALREADY_READ    = (bool*)malloc(A * sizeof(bool));          // Vetor booleano para arquivos já lidos
+    DADOS           = (persona*)malloc(A*sizeof(persona));      // Vetor de estrutura com nome, pontuacao, etc
     
-    for(i = 0; i < T ; i++)
+    pthread_attr_t atributes;                                   //Atributos de thread
+    pthread_attr_init(&atributes);                              
+    pthread_attr_setdetachstate(&atributes, PTHREAD_CREATE_JOINABLE);
+
+    for(i = 0; i < T; i++)                                      // Criação das threads
     {
-        pthread_create(&VETOR_THREADS[i], NULL, inc, NULL);
+        int thread_boy = pthread_create(&threads[i], &atributes, thread, NULL);
     }
 
+    for(i = 0; i < T; i++)                                      // Esperar as threads terminarem, para não usar informações erradas
+    {
+        pthread_join(threads[i], NULL);
+    }
+
+    soma = soma/N;                                              // Última parte do cálculo da média
+
+    for(i = 0; i < A; i++)                                      // Todos os arquivos serão re-operados, então deve-se zerar o vetor de operados
+    {
+        ALREADY_READ[i] = 0;
+    }
+
+    operation = 1;
+
+    for(i = 0; i < T; i++)                                      // Recriação das threads para modo WRITE
+    {
+        int thread_boy = pthread_create(&threads[i], &atributes, thread, NULL);
+    }
+    
+    for(i = 0; i < T; i++)                                      // Esperar as threads terminarem, para não usar informações erradas
+    {
+        pthread_join(threads[i], NULL);
+    }  
+
     free(ALREADY_READ);
-    free(VETOR_THREADS);
     free(DADOS);
+    pthread_exit(NULL);
+
+    printf("%lf\n", soma);
     return 0;
 }
