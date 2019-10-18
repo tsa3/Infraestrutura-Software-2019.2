@@ -1,5 +1,5 @@
 # Infraestrutura-Software-2019.2
-Project an list in assembly
+### Project an list in assembly and threads.
 
 ## Credits:
 ### Arthur Henrique - thurcst
