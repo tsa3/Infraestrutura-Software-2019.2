@@ -62,9 +62,10 @@ void *thread(){
     double Somatorio = 0;                                                                                   // Recebe a soma dos arquivos
     while(PALMEIRAS_SEM_MUNDIAL)
     {
-        int cnt;
+        int cnt,i,j;
+        char aux[50];
         int SELETOR_ARQUIVO = NAO_DEFINIDO;
-        FILE *arquivo, arquivo_saida;
+        FILE *arquivo, *arquivo_saida;
         for(cnt = 0; i < A; i++)
         {                                                                                                   // Procurar arquivo ainda não lido
             pthread_mutex_lock(&check_files);
@@ -92,24 +93,24 @@ void *thread(){
 
         if(arquivo == NULL || arquivo_saida == NULL)
         {
-            printf("O arquivo %d base ou o de saída não foi aberto\n", SELETOR_ARQUIVO);
-            pthread_exit(NULL);
+            printf("Nao foi possivel abrir os arquivos de entrada ou saida.");
         }
 
-        while(fscanf(arq, " %s %s %i %lf", DADOS[SELETOR_ARQUIVO].NOME, DADOS[SELETOR_ARQUIVO].ID, &DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO, &DADOS[SELETOR_ARQUIVO].PONTUACAO) != EOF)    // Ler enquanto não for fim de arquivo (End Of File)
-        {                                                                                                   
-            if(operation == READ)                                                                                           // Se o operation for READ, iremos apenas ler os valores e somar à variável local
+        while(fscanf(arquivo, " %s %s %i %lf", DADOS[SELETOR_ARQUIVO].NOME, DADOS[SELETOR_ARQUIVO].ID, &DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO, &DADOS[SELETOR_ARQUIVO].PONTUACAO) != EOF)    // Ler enquanto não for fim de arquivo (End Of File)
+        {
+            if(operation == READ)                                                                                                            // Se o operation for READ, iremos apenas ler os valores e somar à variável local
             {                                                                                                       
-                Somatorio += DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO/pow(DADOS[SELETOR_ARQUIVO].PONTUACAO,2);                  // Fórmula da média é media[i] = (ultimo_acesso[i]/(pontuacao[i]*pontuacao[i])/N);
+                Somatorio += DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO/(DADOS[SELETOR_ARQUIVO].PONTUACAO*DADOS[SELETOR_ARQUIVO].PONTUACAO);       // Fórmula da média é media[i] = (ultimo_acesso[i]/(pontuacao[i]*pontuacao[i])/N);
             }
-            else                                                                                                            // Se for WRITE, o usuário será avaliado
+            else                                                                                                                             // Se for WRITE, o usuário será avaliado
             {                                                                                               
-                if((double)DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO/(pow(DADOS[SELETOR_ARQUIVO].PONTUACAO,2)) > soma*2)         // Se a média for maior, significa que está ausente demais e que deve ser excluído
-                {                                                                                           
+                if((double)DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO/(DADOS[SELETOR_ARQUIVO].PONTUACAO*DADOS[SELETOR_ARQUIVO].PONTUACAO))         // Se a média for maior, significa que está ausente demais e que deve ser excluído
+                {
                     printf("%s\n", DADOS[SELETOR_ARQUIVO].NOME);
                 }
-                else{                                                                                                       // Escrevemos o usuário no bancoX_saida
-                    fprintf(arq2,"%s %s %i %.2lf\n", DADOS[SELETOR_ARQUIVO].NOME, DADOS[SELETOR_ARQUIVO].ID, DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO, DADOS[SELETOR_ARQUIVO].PONTUACAO);
+                else                                                                                                                        // Escrevemos o usuário no bancoX_saida
+                {
+                    fprintf(arquivo_saida,"%s %s %i %.2lf\n", DADOS[SELETOR_ARQUIVO].NOME, DADOS[SELETOR_ARQUIVO].ID, DADOS[SELETOR_ARQUIVO].ULTIMO_ACESSO, DADOS[SELETOR_ARQUIVO].PONTUACAO);
                 }
             }
         }
@@ -123,17 +124,15 @@ int main(){
     int         i,j, aux;
     printf("Digite a quantidade de Usuarios:");
     scanf("%d", &N);
-    printf("\n");
     printf("Digite a quantidade de arquivos:");
     scanf("%d", &A);
-    printf("\n");
     
     while(A<2)                                                  //  Tratamento da regra 1 (A >= 2)
     {                                                           
         printf("Valor de A deve ser maior ou igual a dois\n");
         scanf("%d", &A);
     }
-
+    printf("Digite a quantidade de threads:");
     scanf("%d", &T);
     while(T > floor(A/2))                                       // Tratamento da quantidade de Threads
     {                                                           
@@ -142,7 +141,7 @@ int main(){
     }
 
     pthread_t *threads;                                         // Variável thread
-    threads         = (pthread*)malloc(T * sizeof(pthread));    // Vetor de threads
+    threads         = (pthread_t*)malloc(T * sizeof(pthread_t));    // Vetor de threads
     ALREADY_READ    = (bool*)malloc(A * sizeof(bool));          // Vetor booleano para arquivos já lidos
     DADOS           = (persona*)malloc(A*sizeof(persona));      // Vetor de estrutura com nome, pontuacao, etc
     

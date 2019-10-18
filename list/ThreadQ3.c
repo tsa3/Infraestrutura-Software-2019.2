@@ -27,7 +27,7 @@ ATENÇÃO: apesar de x1(k+1) pode ser calculada ao mesmo tempo que x2(k+1),, xi(
 
 int                 QTD_THREADS;
 int                 **BANCO;
-double              MATRIZ_A[QTD_VAR][QTD_VAR] = {1,2,3,4,5};   // Variável responsável pela matriz A
+double              MATRIZ_A[QTD_VAR][QTD_VAR] = {1,2,3,4};   // Variável responsável pela matriz A
 double              MATRIZ_B[QTD_VAR] = {5, 9};                 // Variável responsável pela matriz B
 double              MATRIZ_X[QTD_VAR][P];                       // Essa aqui é a variável responsável pela matriz X
 pthread_barrier_t   Buffon;                                     // Sim, buffon é um muro
@@ -36,14 +36,15 @@ void *operation(void *threadid)
 {
     int k   = 0;
     int ID  = *(int*)threadid;
+    int i;
     while(k < P)                                                // Algoritmo usado no enunciado da questão, sendo P a quantidade de iterações
     {
         int CNT = 0;
         int MATRIZ_AUX = BANCO[ID][CNT];
         while(PALMEIRAS_SEM_MUNDIAL)
         {
+            int ID_Aux = BANCO[ID][CNT];
             double E = 0;                                       // E = símbolo de somatório
-            int i;
             for(i = 0 ; i < QTD_VAR; i++)
             {
                 if(i != MATRIZ_AUX)
@@ -51,7 +52,7 @@ void *operation(void *threadid)
                     E += MATRIZ_A[ID_Aux][i]*MATRIZ_X[i][k];
                 }
             }
-            MATRIZ_X[ID_Aux][k+1] = (1/a[MATRIZ_AUX][MATRIZ_AUX])*(MATRIZ_B[MATRIZ_AUX] - E);   // Novo valor da variável
+            MATRIZ_X[ID_Aux][k+1] = (1/MATRIZ_A[MATRIZ_AUX][MATRIZ_AUX])*(MATRIZ_B[MATRIZ_AUX] - E);   // Novo valor da variável
             CNT++;
             if(CNT > QTD_VAR)                                   // Se quantidade de variáveis já foi atingida, passamos para próxima iteração
             {
@@ -72,19 +73,21 @@ int main(){
     int i, j, *referencial,aux;
     int count = 0;
     int organizador = 0;
-    pthread_t *threads;
-    scanf(%d, &QTD_THREADS);
+    scanf("%d", &QTD_THREADS);
 
     pthread_barrier_init(&Buffon, NULL,QTD_THREADS);            // Inicialização da barreira
-    
-    threads = (*threads)malloc(QTD_THREADS*sizeof(pthread_t));
-    referencial = (*int)malloc(QTD_THREADS*sizeof(int));
+    printf("Barreira Criada");
 
     if(QTD_THREADS > QTD_VAR)                                   // Não podemos ter mais threads que variáveis, então igualamos caso seja maior
     {
         QTD_THREADS = QTD_VAR;
     }
-    
+
+    pthread_t *threads[QTD_THREADS];
+    printf("Vetor de threads criado");
+    referencial = (int*)malloc(QTD_THREADS*sizeof(int));
+    printf("Vetor de referencia criad");
+        
     BANCO = (int**) malloc(QTD_VAR * sizeof(int*));             // Alocar o vetor de valores
     
     for(i = 0; i < QTD_THREADS; i++)                            // Aloca cada setor do vetor Bidimensional
@@ -105,16 +108,16 @@ int main(){
     for(i = 0; i < QTD_THREADS; i++)
     {
         referencial[i] = i;
-        pthread_create(&thread[i], NULL, operation, (*void)referencial[i]);
+        pthread_create(&threads[i], NULL, operation, (void*)referencial[i]);
     }
 
     for(i = 0; i < QTD_THREADS; i++)
     {                          // Esperando o fim das threads
         printf("Esperando threads...");
         if(i > 0){
-            printf("Thread %d pronta." i-1);
+            printf("Thread %d pronta.", i-1);
         }
-        pthread_join(thread[i],NULL);
+        pthread_join(threads[i],NULL);
     }
     
     printf("Ultima thread pronta. Seguindo o programa...\n");
